@@ -1,0 +1,458 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Dashboard Return Rate RTS</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+:root{
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px);
+  padding-bottom:env(safe-area-inset-bottom,0px);
+  --bg:#eef1f4; --panel:#ffffff; --ink:#14202e; --muted:#5d6b7a; --line:#d9dfe6;
+  --tt:#0f9d8a; --sp:#ee6a2c; --bad:#d6293e; --good:#1c8a5a; --accent:#14202e; --accent-ink:#ffffff;
+  --chip-off:#e4e9ee;
+  --g1:#2f6fed; --g2:#0f9d8a; --g3:#c4831a; --g4:#8a4fd0; --g5:#d6293e;
+  --font:'Plus Jakarta Sans',system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#0f151c; --panel:#171f29; --ink:#e8edf2; --muted:#93a0ae; --line:#2a3542;
+    --tt:#2fc4ae; --sp:#ff8a4d; --bad:#ff5b6e; --good:#43c58a; --accent:#e8edf2; --accent-ink:#0f151c;
+    --chip-off:#242f3b;
+    --g1:#6c9bff; --g2:#2fc4ae; --g3:#e5a93f; --g4:#b58aff; --g5:#ff5b6e;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0f151c; --panel:#171f29; --ink:#e8edf2; --muted:#93a0ae; --line:#2a3542;
+  --tt:#2fc4ae; --sp:#ff8a4d; --bad:#ff5b6e; --good:#43c58a; --accent:#e8edf2; --accent-ink:#0f151c;
+  --chip-off:#242f3b;
+  --g1:#6c9bff; --g2:#2fc4ae; --g3:#e5a93f; --g4:#b58aff; --g5:#ff5b6e;
+}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*,*::before,*::after{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font);font-size:14px;line-height:1.5;-webkit-font-smoothing:antialiased}
+.wrap{max-width:1240px;margin:0 auto;padding:20px 16px 48px}
+header{display:flex;flex-wrap:wrap;gap:12px 20px;align-items:flex-end;justify-content:space-between;margin-bottom:18px}
+h1{font-size:26px;line-height:1.15;font-weight:800;letter-spacing:-.02em;margin:0}
+.sub{color:var(--muted);margin-top:4px;font-size:13px}
+.badge{display:inline-block;padding:2px 9px;border-radius:99px;font-size:12px;font-weight:600;background:var(--chip-off);color:var(--muted);margin-left:6px;vertical-align:middle}
+.badge.demo{background:color-mix(in srgb,var(--sp) 20%,transparent);color:var(--sp)}
+.btn{font:inherit;font-weight:600;border:1px solid var(--line);background:var(--panel);color:var(--ink);padding:8px 14px;border-radius:8px;cursor:pointer}
+.btn.primary{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+.btn:focus-visible,.chip:focus-visible,select:focus-visible,input:focus-visible,th button:focus-visible{outline:2px solid var(--g1);outline-offset:2px}
+.hdr-actions{display:flex;gap:8px;flex-wrap:wrap}
+
+.filters{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:14px;display:grid;gap:14px;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));margin-bottom:16px}
+.field label,.field .lbl{display:block;font-size:12px;font-weight:600;color:var(--muted);margin-bottom:6px}
+.field input,.field select{width:100%;font:inherit;padding:8px 10px;border-radius:8px;border:1px solid var(--line);background:var(--bg);color:var(--ink)}
+.dates{display:flex;gap:8px}
+.seg{display:flex;border:1px solid var(--line);border-radius:8px;overflow:hidden}
+.seg button{flex:1;font:inherit;font-weight:600;padding:8px 6px;border:0;background:var(--bg);color:var(--muted);cursor:pointer}
+.seg button[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink)}
+.field.wide{grid-column:1/-1}
+.chips{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.chip{font:inherit;font-weight:600;font-size:13px;padding:5px 12px;border-radius:99px;border:1px solid transparent;cursor:pointer;background:var(--chip-off);color:var(--muted)}
+.chip[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink)}
+.linkbtn{font:inherit;font-size:12px;font-weight:600;color:var(--g1);background:none;border:0;cursor:pointer;padding:4px 6px}
+
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px;margin-bottom:16px}
+.kpi{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:14px 16px}
+.kpi .k{font-size:12px;color:var(--muted);font-weight:600}
+.kpi .v{font-size:26px;font-weight:800;letter-spacing:-.02em;margin-top:2px;font-variant-numeric:tabular-nums}
+.kpi .n{font-size:12px;color:var(--muted);margin-top:2px}
+.kpi.alert{border-color:var(--bad);background:color-mix(in srgb,var(--bad) 8%,var(--panel))}
+.kpi.alert .v{color:var(--bad)}
+
+.grid{display:grid;gap:14px;grid-template-columns:repeat(12,1fr)}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:16px;min-width:0}
+.card h2{font-size:15px;font-weight:700;margin:0 0 2px}
+.card .desc{font-size:12px;color:var(--muted);margin:0 0 12px}
+.c12{grid-column:span 12}.c8{grid-column:span 8}.c7{grid-column:span 7}.c6{grid-column:span 6}.c5{grid-column:span 5}.c4{grid-column:span 4}
+@media(max-width:900px){.c8,.c7,.c6,.c5,.c4{grid-column:span 12}}
+.chartbox{position:relative;height:300px}
+.chartbox.tall{height:340px}
+.cardhead{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;flex-wrap:wrap}
+.cardhead .seg{min-width:190px}
+
+.tablewrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-variant-numeric:tabular-nums;font-size:13px}
+th,td{padding:9px 10px;text-align:right;border-bottom:1px solid var(--line);white-space:nowrap}
+th:first-child,td:first-child{text-align:left}
+th{font-size:12px;color:var(--muted);font-weight:600}
+th button{font:inherit;font-weight:600;color:inherit;background:none;border:0;cursor:pointer;padding:0}
+tbody tr:last-child td{border-bottom:0}
+.ratecell{font-weight:700}
+.bar{display:inline-block;height:6px;border-radius:3px;background:var(--bad);vertical-align:middle;margin-right:8px;opacity:.85}
+.pill-bad{color:var(--bad)}.pill-good{color:var(--good)}
+.note{font-size:12px;color:var(--muted);margin-top:10px}
+.empty{padding:40px 10px;text-align:center;color:var(--muted)}
+.err{background:color-mix(in srgb,var(--bad) 12%,var(--panel));border:1px solid var(--bad);color:var(--ink);padding:10px 14px;border-radius:8px;margin-bottom:14px;display:none}
+dialog{border:1px solid var(--line);border-radius:12px;background:var(--panel);color:var(--ink);max-width:520px;padding:20px;font-family:var(--font)}
+dialog::backdrop{background:rgba(0,0,0,.45)}
+dialog h3{margin:0 0 8px}
+dialog code{background:var(--bg);padding:1px 6px;border-radius:4px;font-size:12px}
+dialog ol{padding-left:18px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div>
+      <h1>Return rate RTS per gudang <span id="badge" class="badge"></span></h1>
+      <div class="sub" id="metaLine"></div>
+    </div>
+    <div class="hdr-actions">
+      <button class="btn" id="btnHelp" type="button">Cara kerja data</button>
+      <button class="btn primary" id="btnUpload" type="button">Buka file JSON lain</button>
+      <input type="file" id="fileInput" accept=".json,application/json" hidden>
+    </div>
+  </header>
+
+  <div class="err" id="err" role="alert"></div>
+
+  <section class="filters" aria-label="Filter">
+    <div class="field">
+      <span class="lbl">Rentang tanggal</span>
+      <div class="dates">
+        <input type="date" id="dFrom" aria-label="Tanggal mulai">
+        <input type="date" id="dTo" aria-label="Tanggal selesai">
+      </div>
+    </div>
+    <div class="field">
+      <span class="lbl">Platform</span>
+      <div class="seg" id="segPlatform">
+        <button type="button" data-v="all" aria-pressed="true">Semua</button>
+        <button type="button" data-v="TikTok" aria-pressed="false">TikTok</button>
+        <button type="button" data-v="Shopee" aria-pressed="false">Shopee</button>
+      </div>
+    </div>
+    <div class="field wide">
+      <span class="lbl">Gudang</span>
+      <div class="chips" id="chips"></div>
+    </div>
+  </section>
+
+  <section class="kpis" id="kpis"></section>
+
+  <section class="grid">
+    <div class="card c7">
+      <div class="cardhead">
+        <div>
+          <h2>Return rate per gudang</h2>
+          <p class="desc">Diurutkan dari yang tertinggi. Merah = paling bermasalah.</p>
+        </div>
+      </div>
+      <div class="chartbox"><canvas id="chGudang"></canvas></div>
+    </div>
+    <div class="card c5">
+      <h2>TikTok vs Shopee per gudang</h2>
+      <p class="desc">Return rate masing-masing platform.</p>
+      <div class="chartbox"><canvas id="chPlatform"></canvas></div>
+    </div>
+
+    <div class="card c12">
+      <div class="cardhead">
+        <div>
+          <h2>Tren return rate harian</h2>
+          <p class="desc">Rate = RTS hari itu / paket terkirim hari itu.</p>
+        </div>
+        <div class="seg" id="segTrend">
+          <button type="button" data-v="global" aria-pressed="true">Gabungan</button>
+          <button type="button" data-v="gudang" aria-pressed="false">Per gudang</button>
+        </div>
+      </div>
+      <div class="chartbox tall"><canvas id="chTrend"></canvas></div>
+    </div>
+
+    <div class="card c12">
+      <h2>Rekap per gudang</h2>
+      <p class="desc">Klik judul kolom untuk mengurutkan.</p>
+      <div class="tablewrap"><table id="tblGudang"></table></div>
+    </div>
+
+    <div class="card c6">
+      <h2>RTS harian (jumlah paket)</h2>
+      <p class="desc">Volume RTS per hari, dipisah platform.</p>
+      <div class="chartbox"><canvas id="chVolume"></canvas></div>
+    </div>
+    <div class="card c6">
+      <h2>10 provinsi dengan RTS terbanyak</h2>
+      <p class="desc">Sesuai filter di atas.</p>
+      <div class="chartbox"><canvas id="chProv"></canvas></div>
+    </div>
+
+    <div class="card c12">
+      <h2>15 kota/kabupaten dengan RTS terbanyak</h2>
+      <p class="desc">Porsi = persentase dari total RTS pada filter yang aktif.</p>
+      <div class="tablewrap"><table id="tblKota"></table></div>
+      <p class="note">Data outbound tidak dipecah per provinsi/kota, jadi untuk wilayah yang ditampilkan adalah jumlah dan porsi RTS, bukan return rate.</p>
+    </div>
+  </section>
+</div>
+
+<dialog id="dlg">
+  <h3>Cara kerja data</h3>
+  <p>Data diambil otomatis dari Google Spreadsheet oleh GitHub Actions, lalu disimpan di <code>data.json</code>. Halaman ini membacanya setiap dibuka.</p>
+  <p class="sub">Kalau yang tampil badge <b>Data contoh</b>, berarti <code>data.json</code> belum ada. Jalankan workflow "Update data" di tab Actions. Kamu juga bisa membuka file JSON manual lewat tombol di atas.</p>
+  <form method="dialog"><button class="btn primary" value="ok">Mengerti</button></form>
+</dialog>
+
+<script>
+(function(){
+'use strict';
+const $ = s => document.querySelector(s);
+const css = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+const fmtInt = n => Math.round(n).toLocaleString('id-ID');
+const fmtPct = r => r==null ? '–' : (r*100).toFixed(2).replace('.',',')+'%';
+const GCOLORS = ['--g1','--g2','--g3','--g4','--g5'];
+
+let DATA = null, isDemo = true;
+const S = { from:'', to:'', platform:'all', g:new Set(), all:[], trend:'global', sortK:'rate', sortDir:-1 };
+const charts = {};
+
+/* ---------- demo data ---------- */
+function makeDemo(){
+  let seed = 42; const rnd = () => (seed = (seed*16807)%2147483647)/2147483647;
+  const G = {
+    'Monacruz Cirebon':{base:900,rr:.018,prov:['Jawa Barat','Jawa Tengah','DKI Jakarta','Banten'],kota:['Kota Bandung','Kab. Bekasi','Kota Semarang','Kota Jakarta Barat','Kab. Tangerang']},
+    'Monacruz Medan':{base:520,rr:.034,prov:['Sumatera Utara','Aceh','Riau','Sumatera Barat'],kota:['Kota Medan','Kab. Deli Serdang','Kota Banda Aceh','Kota Pekanbaru']},
+    'Monacruz Makasar':{base:410,rr:.027,prov:['Sulawesi Selatan','Sulawesi Tengah','Papua','Maluku'],kota:['Kota Makassar','Kab. Gowa','Kota Palu','Kota Jayapura']},
+    'Monacruz Banjarmasin':{base:300,rr:.021,prov:['Kalimantan Selatan','Kalimantan Tengah','Kalimantan Timur'],kota:['Kota Banjarmasin','Kota Balikpapan','Kota Palangka Raya']}
+  };
+  const out=[], rts=[];
+  for(let d=1; d<=20; d++){
+    const ds = '2026-09-'+String(d).padStart(2,'0');
+    for(const [g,cfg] of Object.entries(G)){
+      const tt = Math.round(cfg.base*(0.5+rnd()*0.3)), sp = Math.round(cfg.base*(0.5+rnd()*0.3));
+      out.push({d:ds,g,tt,sp});
+      for(const [p,sent,mult] of [['TikTok',tt,1.25],['Shopee',sp,0.85]]){
+        let n = Math.round(sent*cfg.rr*mult*(0.7+rnd()*0.6));
+        const cnt = {};
+        for(let i=0;i<n;i++){
+          const pv = cfg.prov[Math.floor(Math.pow(rnd(),1.8)*cfg.prov.length)];
+          const kt = cfg.kota[Math.floor(Math.pow(rnd(),1.8)*cfg.kota.length)];
+          const k = pv+'|'+kt; cnt[k]=(cnt[k]||0)+1;
+        }
+        for(const [k,c] of Object.entries(cnt)){ const [prov,kota]=k.split('|'); rts.push({d:ds,p,g,prov,kota,n:c}); }
+      }
+    }
+  }
+  return {meta:{generated:'data contoh',rts_start:'2026-09-01',rts_end:'2026-09-20'},outbound:out,rts};
+}
+
+/* ---------- load ---------- */
+function loadData(data, demo){
+  if(!data || !Array.isArray(data.outbound) || !Array.isArray(data.rts)) throw new Error('Format JSON tidak sesuai. Pastikan file berasal dari script export_rts_dashboard.py.');
+  DATA = data; isDemo = !!demo;
+  const dates = [...new Set([...data.outbound.map(o=>o.d), ...data.rts.map(r=>r.d)])].sort();
+  S.all = [...new Set([...data.outbound.map(o=>o.g), ...data.rts.map(r=>r.g)])].sort();
+  S.g = new Set(S.all);
+  S.from = dates[0]; S.to = dates[dates.length-1];
+  $('#dFrom').value = S.from; $('#dTo').value = S.to;
+  $('#dFrom').min = $('#dTo').min = S.from; $('#dFrom').max = $('#dTo').max = S.to;
+  const b = $('#badge'); b.textContent = demo ? 'Data contoh' : 'Data asli'; b.className = 'badge'+(demo?' demo':'');
+  $('#metaLine').textContent = (demo ? 'Ini data contoh. ' : '')+'Periode '+S.from+' sampai '+S.to+(data.meta&&data.meta.generated&&!demo ? ' · diambil '+data.meta.generated : '');
+  buildChips(); render();
+}
+
+function buildChips(){
+  const box = $('#chips'); box.innerHTML='';
+  const mk = (label, fn, pressed) => { const b=document.createElement('button'); b.type='button'; b.className='chip'; b.textContent=label; b.setAttribute('aria-pressed',pressed); b.addEventListener('click',fn); box.appendChild(b); return b; };
+  S.all.forEach(g => mk(g.replace('Monacruz ',''), e => {
+    if(S.g.has(g)) S.g.delete(g); else S.g.add(g);
+    e.currentTarget.setAttribute('aria-pressed', S.g.has(g)); render();
+  }, true));
+  const all = document.createElement('button'); all.type='button'; all.className='linkbtn'; all.textContent='Pilih semua';
+  all.addEventListener('click',()=>{ S.g=new Set(S.all); box.querySelectorAll('.chip').forEach(c=>c.setAttribute('aria-pressed','true')); render(); });
+  const none = document.createElement('button'); none.type='button'; none.className='linkbtn'; none.textContent='Kosongkan';
+  none.addEventListener('click',()=>{ S.g=new Set(); box.querySelectorAll('.chip').forEach(c=>c.setAttribute('aria-pressed','false')); render(); });
+  box.appendChild(all); box.appendChild(none);
+}
+
+/* ---------- compute ---------- */
+const inR = d => d>=S.from && d<=S.to;
+const sentOf = (o,p) => p==='TikTok'?o.tt : p==='Shopee'?o.sp : o.tt+o.sp;
+const ratio = (a,b) => b>0 ? a/b : null;
+
+function compute(){
+  const outs = DATA.outbound.filter(o=>inR(o.d)&&S.g.has(o.g));
+  const rts = DATA.rts.filter(r=>inR(r.d)&&S.g.has(r.g));
+  const rtsP = S.platform==='all' ? rts : rts.filter(r=>r.p===S.platform);
+
+  const gs = {};
+  [...S.g].forEach(g => gs[g]={g,ttS:0,spS:0,ttR:0,spR:0});
+  outs.forEach(o=>{gs[o.g].ttS+=o.tt; gs[o.g].spS+=o.sp;});
+  rts.forEach(r=>{ if(r.p==='TikTok') gs[r.g].ttR+=r.n; else gs[r.g].spR+=r.n; });
+  const gRows = Object.values(gs).map(x=>{
+    const sent = S.platform==='TikTok'?x.ttS : S.platform==='Shopee'?x.spS : x.ttS+x.spS;
+    const r = S.platform==='TikTok'?x.ttR : S.platform==='Shopee'?x.spR : x.ttR+x.spR;
+    return {...x, sent, rts:r, rate:ratio(r,sent), ttRate:ratio(x.ttR,x.ttS), spRate:ratio(x.spR,x.spS)};
+  });
+
+  const dates = [...new Set([...outs.map(o=>o.d), ...rts.map(r=>r.d)])].sort();
+  const day = {}; dates.forEach(d=>day[d]={sent:0,tt:0,sp:0,rts:0,ttR:0,spR:0,g:{}});
+  outs.forEach(o=>{ const s=sentOf(o,S.platform); day[o.d].sent+=s; day[o.d].g[o.g]=day[o.d].g[o.g]||{sent:0,rts:0}; day[o.d].g[o.g].sent+=s; });
+  rtsP.forEach(r=>{ day[r.d].rts+=r.n; day[r.d].g[r.g]=day[r.d].g[r.g]||{sent:0,rts:0}; day[r.d].g[r.g].rts+=r.n; });
+  rts.forEach(r=>{ if(r.p==='TikTok') day[r.d].ttR+=r.n; else day[r.d].spR+=r.n; });
+
+  const tot = gRows.reduce((a,x)=>({sent:a.sent+x.sent,rts:a.rts+x.rts}),{sent:0,rts:0});
+
+  const agg = (key) => { const m={}; rtsP.forEach(r=>{ const k=key(r); m[k]=(m[k]||0)+r.n; }); return Object.entries(m).sort((a,b)=>b[1]-a[1]); };
+  const prov = agg(r=>r.prov).slice(0,10);
+  const kotaM = {}; rtsP.forEach(r=>{ const k=r.kota+'|'+r.prov; kotaM[k]=(kotaM[k]||0)+r.n; });
+  const kota = Object.entries(kotaM).sort((a,b)=>b[1]-a[1]).slice(0,15).map(([k,n])=>{ const [kt,pv]=k.split('|'); return {kota:kt,prov:pv,n}; });
+
+  return {gRows,dates,day,tot,prov,kota,rtsTotal:tot.rts};
+}
+
+/* ---------- render ---------- */
+function setChart(id, cfg){
+  if(charts[id]) charts[id].destroy();
+  charts[id] = new Chart($(id), cfg);
+}
+function baseOpts(extra){
+  const ink = css('--muted'), grid = css('--line');
+  return Object.assign({
+    responsive:true, maintainAspectRatio:false, animation:false,
+    plugins:{legend:{labels:{color:ink,boxWidth:12,font:{family:css('--font')}}},tooltip:{}},
+    scales:{x:{ticks:{color:ink},grid:{color:grid}},y:{ticks:{color:ink},grid:{color:grid}}}
+  }, extra||{});
+}
+
+function render(){
+  if(!DATA) return;
+  const C = compute();
+  const hasData = S.g.size>0 && C.gRows.some(r=>r.sent>0 || r.rts>0);
+
+  // KPI
+  const ranked = C.gRows.filter(r=>r.rate!=null).sort((a,b)=>b.rate-a.rate);
+  const worst = ranked[0], best = ranked[ranked.length-1];
+  const platLabel = S.platform==='all'?'semua platform':S.platform;
+  $('#kpis').innerHTML = `
+    <div class="kpi"><div class="k">Paket terkirim</div><div class="v">${fmtInt(C.tot.sent)}</div><div class="n">${platLabel}</div></div>
+    <div class="kpi"><div class="k">Total RTS</div><div class="v">${fmtInt(C.tot.rts)}</div><div class="n">${platLabel}</div></div>
+    <div class="kpi"><div class="k">Return rate keseluruhan</div><div class="v">${fmtPct(ratio(C.tot.rts,C.tot.sent))}</div><div class="n">RTS / terkirim</div></div>
+    <div class="kpi ${worst?'alert':''}"><div class="k">Gudang rate tertinggi</div><div class="v">${worst?worst.g.replace('Monacruz ',''):'–'}</div><div class="n">${worst?fmtPct(worst.rate)+' · '+fmtInt(worst.rts)+' RTS':'Belum ada data'}${best&&worst&&best!==worst?' · terendah: '+best.g.replace('Monacruz ','')+' '+fmtPct(best.rate):''}</div></div>`;
+
+  const ink = css('--muted');
+  Chart.defaults.color = ink; Chart.defaults.font.family = css('--font');
+
+  // Gudang bar (ranked)
+  const rk = C.gRows.filter(r=>r.rate!=null).sort((a,b)=>b.rate-a.rate);
+  setChart('#chGudang',{type:'bar',data:{
+    labels:rk.map(r=>r.g.replace('Monacruz ','')),
+    datasets:[{label:'Return rate (%)',data:rk.map(r=>+(r.rate*100).toFixed(2)),
+      backgroundColor:rk.map((r,i)=> i===0 && rk.length>1 ? css('--bad') : css('--g1')),borderRadius:4}]},
+    options:baseOpts({indexAxis:'y',plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>' '+c.parsed.x.toFixed(2)+'%'}}},
+      scales:{x:{beginAtZero:true,ticks:{color:ink,callback:v=>v+'%'},grid:{color:css('--line')}},y:{ticks:{color:ink},grid:{display:false}}}})});
+
+  // Platform grouped
+  const pr = [...rk];
+  setChart('#chPlatform',{type:'bar',data:{
+    labels:pr.map(r=>r.g.replace('Monacruz ','')),
+    datasets:[
+      {label:'TikTok',data:pr.map(r=>r.ttRate==null?null:+(r.ttRate*100).toFixed(2)),backgroundColor:css('--tt'),borderRadius:4},
+      {label:'Shopee',data:pr.map(r=>r.spRate==null?null:+(r.spRate*100).toFixed(2)),backgroundColor:css('--sp'),borderRadius:4}]},
+    options:baseOpts({plugins:{legend:{position:'bottom',labels:{color:ink,boxWidth:12}},tooltip:{callbacks:{label:c=>' '+c.dataset.label+': '+(c.parsed.y==null?'–':c.parsed.y.toFixed(2)+'%')}}},
+      scales:{x:{ticks:{color:ink},grid:{display:false}},y:{beginAtZero:true,ticks:{color:ink,callback:v=>v+'%'},grid:{color:css('--line')}}}})});
+
+  // Trend
+  const labels = C.dates;
+  let ds;
+  if(S.trend==='global'){
+    ds=[{label:'Return rate (%)',data:labels.map(d=>{const r=ratio(C.day[d].rts,C.day[d].sent);return r==null?null:+(r*100).toFixed(2);}),
+      borderColor:css('--bad'),backgroundColor:css('--bad'),tension:.25,pointRadius:3,spanGaps:true}];
+  } else {
+    ds=[...S.g].map((g,i)=>({label:g.replace('Monacruz ',''),
+      data:labels.map(d=>{const x=C.day[d].g[g];const r=x?ratio(x.rts,x.sent):null;return r==null?null:+(r*100).toFixed(2);}),
+      borderColor:css(GCOLORS[i%GCOLORS.length]),backgroundColor:css(GCOLORS[i%GCOLORS.length]),tension:.25,pointRadius:2,spanGaps:true}));
+  }
+  setChart('#chTrend',{type:'line',data:{labels:labels.map(d=>d.slice(5)),datasets:ds},
+    options:baseOpts({interaction:{mode:'index',intersect:false},
+      plugins:{legend:{display:S.trend!=='global',position:'bottom',labels:{color:ink,boxWidth:12}},tooltip:{callbacks:{label:c=>' '+c.dataset.label+': '+(c.parsed.y==null?'–':c.parsed.y.toFixed(2)+'%')}}},
+      scales:{x:{ticks:{color:ink,maxTicksLimit:12},grid:{color:css('--line')}},y:{beginAtZero:true,ticks:{color:ink,callback:v=>v+'%'},grid:{color:css('--line')}}}})});
+
+  // Volume stacked
+  setChart('#chVolume',{type:'bar',data:{labels:labels.map(d=>d.slice(5)),datasets:[
+      {label:'TikTok',data:labels.map(d=>C.day[d].ttR),backgroundColor:css('--tt'),stack:'a'},
+      {label:'Shopee',data:labels.map(d=>C.day[d].spR),backgroundColor:css('--sp'),stack:'a'}]},
+    options:baseOpts({plugins:{legend:{position:'bottom',labels:{color:ink,boxWidth:12}}},
+      scales:{x:{stacked:true,ticks:{color:ink,maxTicksLimit:12},grid:{display:false}},y:{stacked:true,beginAtZero:true,ticks:{color:ink},grid:{color:css('--line')}}}})});
+
+  // Provinsi
+  setChart('#chProv',{type:'bar',data:{labels:C.prov.map(p=>p[0]),datasets:[{label:'RTS',data:C.prov.map(p=>p[1]),backgroundColor:css('--g4'),borderRadius:4}]},
+    options:baseOpts({indexAxis:'y',plugins:{legend:{display:false}},
+      scales:{x:{beginAtZero:true,ticks:{color:ink},grid:{color:css('--line')}},y:{ticks:{color:ink},grid:{display:false}}}})});
+
+  renderGudangTable(C);
+  renderKotaTable(C);
+}
+
+function renderGudangTable(C){
+  const cols = [['g','Gudang'],['sent','Terkirim'],['rts','RTS'],['rate','Return rate'],['ttRate','Rate TikTok'],['spRate','Rate Shopee']];
+  const rows = [...C.gRows].sort((a,b)=>{
+    const x=a[S.sortK], y=b[S.sortK];
+    if(S.sortK==='g') return S.sortDir*String(x).localeCompare(String(y));
+    return S.sortDir*((x==null?-1:x)-(y==null?-1:y));
+  });
+  const maxRate = Math.max(0.0001,...rows.map(r=>r.rate||0));
+  const avg = ratio(C.tot.rts,C.tot.sent);
+  let h = '<thead><tr>'+cols.map(([k,l])=>`<th scope="col" aria-sort="${S.sortK===k?(S.sortDir>0?'ascending':'descending'):'none'}"><button type="button" data-k="${k}">${l}${S.sortK===k?(S.sortDir>0?' ▲':' ▼'):''}</button></th>`).join('')+'</tr></thead><tbody>';
+  if(!rows.length){ h += '<tr><td colspan="6" class="empty">Pilih minimal satu gudang.</td></tr>'; }
+  rows.forEach(r=>{
+    const cls = r.rate!=null && avg!=null ? (r.rate>avg?'pill-bad':'pill-good') : '';
+    h += `<tr><td>${r.g}</td><td>${fmtInt(r.sent)}</td><td>${fmtInt(r.rts)}</td>
+      <td class="ratecell ${cls}"><span class="bar" style="width:${Math.round((r.rate||0)/maxRate*60)}px"></span>${fmtPct(r.rate)}</td>
+      <td>${fmtPct(r.ttRate)}</td><td>${fmtPct(r.spRate)}</td></tr>`;
+  });
+  h += '</tbody>';
+  $('#tblGudang').innerHTML = h;
+  $('#tblGudang').querySelectorAll('th button').forEach(b=>b.addEventListener('click',()=>{
+    const k=b.dataset.k; if(S.sortK===k) S.sortDir*=-1; else {S.sortK=k;S.sortDir=k==='g'?1:-1;} renderGudangTable(C);
+  }));
+}
+
+function renderKotaTable(C){
+  if(!C.kota.length){ $('#tblKota').innerHTML='<tbody><tr><td class="empty">Tidak ada data RTS pada filter ini.</td></tr></tbody>'; return; }
+  let h='<thead><tr><th>Kota/Kabupaten</th><th>Provinsi</th><th>RTS</th><th>Porsi dari total RTS</th></tr></thead><tbody>';
+  C.kota.forEach(k=>{ h+=`<tr><td>${esc(k.kota)}</td><td style="text-align:left">${esc(k.prov)}</td><td>${fmtInt(k.n)}</td><td>${fmtPct(ratio(k.n,C.rtsTotal))}</td></tr>`; });
+  $('#tblKota').innerHTML = h+'</tbody>';
+}
+const esc = s => String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+
+/* ---------- events ---------- */
+function seg(id, key){
+  $(id).querySelectorAll('button').forEach(b=>b.addEventListener('click',()=>{
+    $(id).querySelectorAll('button').forEach(x=>x.setAttribute('aria-pressed',x===b));
+    S[key]=b.dataset.v; render();
+  }));
+}
+seg('#segPlatform','platform'); seg('#segTrend','trend');
+$('#dFrom').addEventListener('change',e=>{ S.from=e.target.value||S.from; if(S.from>S.to){S.to=S.from;$('#dTo').value=S.to;} render(); });
+$('#dTo').addEventListener('change',e=>{ S.to=e.target.value||S.to; if(S.to<S.from){S.from=S.to;$('#dFrom').value=S.from;} render(); });
+$('#btnUpload').addEventListener('click',()=>$('#fileInput').click());
+$('#btnHelp').addEventListener('click',()=>$('#dlg').showModal());
+$('#fileInput').addEventListener('change',e=>{
+  const f = e.target.files[0]; if(!f) return;
+  const err = $('#err'); err.style.display='none';
+  const rd = new FileReader();
+  rd.onload = () => { try{ loadData(JSON.parse(rd.result), false); }catch(ex){ err.textContent = 'Gagal membaca file: '+ex.message; err.style.display='block'; } };
+  rd.onerror = () => { err.textContent='File tidak bisa dibaca. Coba upload ulang.'; err.style.display='block'; };
+  rd.readAsText(f);
+});
+window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change',()=>render());
+new MutationObserver(()=>render()).observe(document.documentElement,{attributes:true,attributeFilter:['data-theme']});
+
+fetch('data.json?v='+Date.now(), {cache:'no-store'})
+  .then(r => { if(!r.ok) throw new Error('HTTP '+r.status); return r.json(); })
+  .then(d => loadData(d, false))
+  .catch(() => loadData(makeDemo(), true));
+})();
+</script>
+</body>
+</html>
